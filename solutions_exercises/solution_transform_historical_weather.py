@@ -53,7 +53,7 @@ def solution_transform_historical_weather():
         cursor = duckdb_conn.cursor()
         cursor.sql(f"CREATE OR REPLACE TABLE {output_table} (time DATETIME, city VARCHAR, day_max_temperature INTEGER, heat_days_per_year INTEGER)")
         cursor.sql(
-            f"SELECT time, city, temperature_2m_max AS day_max_temperature, SUM(CASE WHEN CAST(temperature_2m_max AS FLOAT) >= {hot_day_celsius} THEN 1 ELSE 0 END) OVER(PARTITION BY city, YEAR(CAST(time AS DATE))) AS heat_days_per_year FROM {in_table};"
+            f"INSERT INTO {output_table} SELECT time, city, temperature_2m_max AS day_max_temperature, SUM(CASE WHEN CAST(temperature_2m_max AS FLOAT) >= {hot_day_celsius} THEN 1 ELSE 0 END) OVER(PARTITION BY city, YEAR(CAST(time AS DATE))) AS heat_days_per_year FROM {in_table};"
         )
         cursor.close()
 
@@ -121,7 +121,6 @@ def solution_transform_historical_weather():
         cursor.sql(
             f"CREATE OR REPLACE TABLE {output_table_name} AS SELECT * FROM output_df"
         )
-        cursor.sql(f"INSERT INTO {output_table_name} SELECT * FROM output_df")
         cursor.close()
 
     find_hottest_day_birthyear(

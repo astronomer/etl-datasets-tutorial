@@ -152,14 +152,11 @@ def extract_historical_weather_data(): # by default the dag_id is the name of th
         t_log.info("Creating a table in the DuckDB database.")
 
         cursor.sql(
-            f"CREATE TABLE IF NOT EXISTS {historical_weather_table_name} AS SELECT * FROM historical_weather_df;"
+            f"CREATE OR REPLACE TABLE {historical_weather_table_name} AS SELECT * FROM historical_weather_df;"
         )
 
         t_log.info("Loading the weather info into the table.")
 
-        cursor.sql(
-            f"INSERT INTO {historical_weather_table_name} SELECT * FROM historical_weather_df;"
-        )
         cursor.close()
 
     turn_json_into_table(

@@ -115,10 +115,7 @@ def solution_extract_historical_weather_data():
         duckdb_conn = DuckDBHook(duckdb_conn_id).get_conn()
         cursor = duckdb_conn.cursor()
         cursor.sql(
-            f"CREATE TABLE IF NOT EXISTS {historical_weather_table_name} AS SELECT * FROM historical_weather_df"
-        )
-        cursor.sql(
-            f"INSERT INTO {historical_weather_table_name} SELECT * FROM historical_weather_df"
+            f"CREATE OR REPLACE TABLE {historical_weather_table_name} AS SELECT * FROM historical_weather_df;"
         )
         cursor.close()
 
