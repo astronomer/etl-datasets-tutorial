@@ -17,6 +17,9 @@ from include.global_variables import airflow_conf_variables as gv
 from include.global_variables import user_input_variables as uv
 from include.global_variables import constants as c
 
+# Dataset definition for data-aware scheduling
+extract_dataset = Dataset("extract")
+
 # --- #
 # DAG #
 # --- #
@@ -31,7 +34,7 @@ from include.global_variables import constants as c
 @dag(
     start_date=datetime(2023, 1, 1),
     # SOLUTION: Run this DAG as soon as the historical weather data table is updated
-    schedule=[Dataset("duckdb://include/dwh/historical_weather_data")],
+    schedule=[extract_dataset],
     catchup=False,
     default_args=gv.default_args,
     description="Runs transformations on climate and current weather data in DuckDB.",
@@ -48,6 +51,7 @@ def solution_transform_historical_weather():
 
         duckdb_conn = DuckDBHook(duckdb_conn_id).get_conn()
         cursor = duckdb_conn.cursor()
+        cursor.sql(f"CREATE OR REPLACE TABLE {output_table} (time DATETIME, city VARCHAR, day_max_temperature INTEGER, heat_days_per_year INTEGER)")
         cursor.sql(
             f"SELECT time, city, temperature_2m_max AS day_max_temperature, SUM(CASE WHEN CAST(temperature_2m_max AS FLOAT) >= {hot_day_celsius} THEN 1 ELSE 0 END) OVER(PARTITION BY city, YEAR(CAST(time AS DATE))) AS heat_days_per_year FROM {in_table};"
         )
