@@ -21,6 +21,7 @@ t_log = logging.getLogger("airflow.task")
 # -------------- #
 # DAG Definition #
 # -------------- #
+extract_dataset = Dataset("extract")
 
 # ---------- #
 # Exercise 1 #
@@ -32,7 +33,7 @@ t_log = logging.getLogger("airflow.task")
 @dag(
     start_date=datetime(2023, 1, 1), # date after which the DAG can be scheduled
     # this DAG runs as soon as the climate and weather data is ready in DuckDB
-    schedule=None, # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
+    schedule=[extract_dataset], # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
     catchup=False,
     max_consecutive_failed_dag_runs=5, # auto-pauses the DAG after 5 consecutive failed runs, experimental
     max_active_runs=1,  # only allow one concurrent run of this DAG, prevents parallel DuckDB calls
@@ -61,7 +62,7 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
         outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
     )
     # by default the name of the decorated function is the task_id
-    def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, hot_day_celsius: float) -> None:
+    def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, output_table: str, hot_day_celsius: float) -> None:
         
         from duckdb_provider.hooks.duckdb_hook import DuckDBHook
 
@@ -70,6 +71,8 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
 
         t_log.info("Creating a table for the weather data in the database.")
 
+        cursor.sql(f"CREATE OR REPLACE TABLE {output_table} (time DATETIME, city VARCHAR, day_max_temperature INTEGER, heat_days_per_year INTEGER)")
+
         cursor.sql(
             f"SELECT time, city, temperature_2m_max AS day_max_temperature, SUM(CASE WHEN CAST(temperature_2m_max AS FLOAT) >= {hot_day_celsius} THEN 1 ELSE 0 END) OVER(PARTITION BY city, YEAR(CAST(time AS DATE))) AS heat_days_per_year FROM {in_table};"
         )
@@ -77,7 +80,8 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
 
     create_historical_weather_reporting_table(
         duckdb_conn_id=gv.CONN_ID_DUCKDB, 
-        in_table=c.IN_HISTORICAL_WEATHER_TABLE_NAME, 
+        in_table=c.IN_HISTORICAL_WEATHER_TABLE_NAME,
+        output_table=c.REPORT_HISTORICAL_WEATHER_TABLE_NAME,
         hot_day_celsius=uv.HOT_DAY
     )
 
