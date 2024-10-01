@@ -45,7 +45,7 @@ extract_dataset = Dataset("extract")
 # instantiate a DAG with the @dag decorator and set DAG parameters (see: https://www.astronomer.io/docs/learn/airflow-dag-parameters)
 @dag(
     start_date=datetime(2023, 1, 1), # date after which the DAG can be scheduled
-    schedule=[start_dataset], # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
+    schedule=None, # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
     catchup=False, # see: https://www.astronomer.io/docs/learn/rerunning-dags#catchup
     max_consecutive_failed_dag_runs=5, # auto-pauses the DAG after 5 consecutive failed runs, experimental
     max_active_runs=1,  # only allow one concurrent run of this DAG, prevents parallel DuckDB calls

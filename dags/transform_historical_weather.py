@@ -18,10 +18,13 @@ from include.global_variables import constants as c
 # use the Airflow task logger to log information to the task logs (or use print())
 t_log = logging.getLogger("airflow.task")
 
+# Dataset definition for data-aware scheduling
+extract_dataset = Dataset("extract")
+
 # -------------- #
 # DAG Definition #
 # -------------- #
-extract_dataset = Dataset("extract")
+
 
 # ---------- #
 # Exercise 1 #
@@ -33,7 +36,7 @@ extract_dataset = Dataset("extract")
 @dag(
     start_date=datetime(2023, 1, 1), # date after which the DAG can be scheduled
     # this DAG runs as soon as the climate and weather data is ready in DuckDB
-    schedule=[extract_dataset], # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
+    schedule=None, # see: https://www.astronomer.io/docs/learn/scheduling-in-airflow for options
     catchup=False,
     max_consecutive_failed_dag_runs=5, # auto-pauses the DAG after 5 consecutive failed runs, experimental
     max_active_runs=1,  # only allow one concurrent run of this DAG, prevents parallel DuckDB calls
