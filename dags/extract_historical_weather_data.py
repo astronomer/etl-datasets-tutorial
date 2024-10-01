@@ -30,6 +30,7 @@ t_log = logging.getLogger("airflow.task")
 # ------------------ #
 
 start_dataset = Dataset("start")
+extract_dataset = Dataset("extract")
 
 # -------------- #
 # DAG Definition #
@@ -113,7 +114,7 @@ def extract_historical_weather_data(): # by default the dag_id is the name of th
     historical_weather = get_historical_weather(coordinates=coordinates)
 
     @task(
-        outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
+        outlets=[Dataset("duckdb://include/dwh/historical_weather_data"), extract_dataset],
     )
     def turn_json_into_table(
         duckdb_conn_id: str,

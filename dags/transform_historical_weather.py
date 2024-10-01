@@ -18,9 +18,13 @@ from include.global_variables import constants as c
 # use the Airflow task logger to log information to the task logs (or use print())
 t_log = logging.getLogger("airflow.task")
 
+# Dataset definition for data-aware scheduling
+extract_dataset = Dataset("extract")
+
 # -------------- #
 # DAG Definition #
 # -------------- #
+
 
 # ---------- #
 # Exercise 1 #
@@ -61,7 +65,7 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
         outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
     )
     # by default the name of the decorated function is the task_id
-    def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, hot_day_celsius: float) -> None:
+    def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, output_table: str, hot_day_celsius: float) -> None:
         
         from duckdb_provider.hooks.duckdb_hook import DuckDBHook
 
@@ -70,6 +74,8 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
 
         t_log.info("Creating a table for the weather data in the database.")
 
+        cursor.sql(f"CREATE OR REPLACE TABLE {output_table} (time DATETIME, city VARCHAR, day_max_temperature INTEGER, heat_days_per_year INTEGER)")
+
         cursor.sql(
             f"SELECT time, city, temperature_2m_max AS day_max_temperature, SUM(CASE WHEN CAST(temperature_2m_max AS FLOAT) >= {hot_day_celsius} THEN 1 ELSE 0 END) OVER(PARTITION BY city, YEAR(CAST(time AS DATE))) AS heat_days_per_year FROM {in_table};"
         )
@@ -77,7 +83,8 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
 
     create_historical_weather_reporting_table(
         duckdb_conn_id=gv.CONN_ID_DUCKDB, 
-        in_table=c.IN_HISTORICAL_WEATHER_TABLE_NAME, 
+        in_table=c.IN_HISTORICAL_WEATHER_TABLE_NAME,
+        output_table=c.REPORT_HISTORICAL_WEATHER_TABLE_NAME,
         hot_day_celsius=uv.HOT_DAY
     )
 

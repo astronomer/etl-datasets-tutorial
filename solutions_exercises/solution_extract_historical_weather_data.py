@@ -23,19 +23,8 @@ from include.meterology_utils import (
     get_historical_weather_from_city_coordinates,
 )
 
-# ----------------- #
-# Astro SDK Queries #
-# ----------------- #
-
-
-@aql.dataframe(pool="duckdb")
-def turn_json_into_table(in_json):
-    """Converts the list of JSON input into one pandas dataframe."""
-    if type(in_json) == dict:
-        df = pd.DataFrame(in_json)
-    else:
-        df = pd.concat([pd.DataFrame(d) for d in in_json], ignore_index=True)
-    return df
+start_dataset = Dataset("start")
+extract_dataset = Dataset("extract")
 
 
 # --- #
@@ -95,7 +84,7 @@ def solution_extract_historical_weather_data():
     historical_weather = get_historical_weather.expand(coordinates=coordinates)
 
     @task(
-        outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
+        outlets=[Dataset("duckdb://include/dwh/historical_weather_data"), extract_dataset],
     )
     def turn_json_into_table(
         duckdb_conn_id: str,

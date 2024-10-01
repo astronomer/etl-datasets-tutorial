@@ -63,13 +63,13 @@ def transform_climate_data(): # by default the dag_id is the name of the decorat
         t_log.info("Creating a table for the climate data in the database.")
 
         cursor.sql(
-            f"CREATE TABLE IF NOT EXISTS {output_table} AS SELECT * FROM {in_climate};"
+            f"CREATE OR REPLACE TABLE {output_table} (date DATE, decade_average_temp INTEGER, year_average_temp INTEGER, month_average_temp INTEGER, day_average_temp INTEGER);"
         )
 
         t_log.info("Performing a transformation on the data.")
 
         cursor.sql(
-            f"INSERT INTO {output_table} SELECT CAST(dt AS DATE) AS date, AVG(LandAverageTemperature) OVER(PARTITION BY YEAR(CAST(dt AS DATE))/10*10) AS decade_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY YEAR(CAST(dt AS DATE))) AS year_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY MONTH(CAST(dt AS DATE))) AS month_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY CAST(dt AS DATE)) AS day_average_temp, FROM {in_climate};"
+            f"SELECT CAST(dt AS DATE) AS date, AVG(LandAverageTemperature) OVER(PARTITION BY YEAR(CAST(dt AS DATE))/10*10) AS decade_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY YEAR(CAST(dt AS DATE))) AS year_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY MONTH(CAST(dt AS DATE))) month_average_temp, AVG(LandAverageTemperature) OVER(PARTITION BY CAST(dt AS DATE)) AS day_average_temp, FROM {in_climate};"
         )
         cursor.close()
 
