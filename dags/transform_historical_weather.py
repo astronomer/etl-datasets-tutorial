@@ -18,9 +18,6 @@ from include.global_variables import constants as c
 # use the Airflow task logger to log information to the task logs (or use print())
 t_log = logging.getLogger("airflow.task")
 
-# Dataset definition for data-aware scheduling
-extract_dataset = Dataset("extract")
-
 # -------------- #
 # DAG Definition #
 # -------------- #
@@ -61,9 +58,7 @@ def transform_historical_weather(): # by default the dag_id is the name of the d
     # see: https://www.astronomer.io/docs/learn/airflow-decorators for information about @task
     # see: https://www.astronomer.io/docs/learn/what-is-an-operator for information about traditional operators
 
-    @task(
-        outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
-    )
+    @task
     # by default the name of the decorated function is the task_id
     def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, output_table: str, hot_day_celsius: float) -> None:
         

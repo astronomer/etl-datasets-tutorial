@@ -17,12 +17,9 @@ from include.global_variables import airflow_conf_variables as gv
 from include.global_variables import user_input_variables as uv
 from include.global_variables import constants as c
 
-# Dataset definition for data-aware scheduling
-extract_dataset = Dataset("extract")
-
-# --- #
-# DAG #
-# --- #
+# -------------- #
+# DAG Definition #
+# -------------- #
 
 # ---------- #
 # Exercise 1 #
@@ -34,7 +31,7 @@ extract_dataset = Dataset("extract")
 @dag(
     start_date=datetime(2023, 1, 1),
     # SOLUTION: Run this DAG as soon as the historical weather data table is updated
-    schedule=[extract_dataset],
+    schedule=[Dataset("duckdb://include/dwh/historical_weather_data")],
     catchup=False,
     default_args=gv.default_args,
     description="Runs transformations on climate and current weather data in DuckDB.",
@@ -42,9 +39,7 @@ extract_dataset = Dataset("extract")
 )
 def solution_transform_historical_weather():
 
-    @task(
-        outlets=[Dataset("duckdb://include/dwh/historical_weather_data")],
-    )
+    @task
     def create_historical_weather_reporting_table(duckdb_conn_id: str, in_table: str, hot_day_celsius: float):
         
         from duckdb_provider.hooks.duckdb_hook import DuckDBHook
