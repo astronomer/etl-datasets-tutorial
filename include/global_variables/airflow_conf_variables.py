@@ -32,7 +32,7 @@ task_log = logging.getLogger("airflow.task")
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "retries": 1,
+    "retries": 2,
     "retry_delay": duration(minutes=1),
 }
 
